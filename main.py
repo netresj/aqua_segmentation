@@ -49,9 +49,7 @@ def preprocess(args):
             for sp, le in zip(start_px, length):
                 mask[sp-1: sp+le-1] = 1
         mask = np.reshape(mask, (256, 1600))
-        np.save(f"{args.preprocessed_data_path}/{image_name}.npy")
-        image_path = glob.glob(f"{args.input_path}/**/{image_name}")[0]
-        
+        np.save(f"{args.preprocessed_data_path}/{image_name}.npy", mask)        
 
 def train(args):
     # prepare data
