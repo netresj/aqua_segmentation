@@ -53,46 +53,55 @@ def preprocess(args):
 
 def train(args):
     # prepare data
-    df_train = pd.read_csv(f"{args.preprocessed_data_path}/train.csv")
-    df_test = pd.read_csv(f"{args.preprocessed_data_path}/test.csv")
-    with open(f"{args.preprocessed_data_path}/labels.txt") as f:
-        labels = f.read().splitlines()
+    with open(f"{args.preprocessed_data_path}/train.txt") as f:
+        train_images = f.read().splitlines()
+    with open(f"{args.preprocessed_data_path}/test.txt") as f:
+        test_images = f.read().splitlines()
     X_train = np.array([
-        imread(f"{args.preprocessed_data_path}/{filename}.png")
-        for filename in df_train["image_id"]
+        imread(glob.glob(f"{args.input_path}/**/{filename}")[0])
+        for filename in train_images
     ])
     X_train = X_train / 255
     X_test = np.array([
-        imread(f"{args.preprocessed_data_path}/{filename}.png")
-        for filename in df_test["image_id"]
+        imread(glob.glob(f"{args.input_path}/**/{filename}")[0])
+        for filename in test_images
     ])
     X_test = X_test / 255
-    y_train = df_train[labels].values
-    y_test = df_test[labels].values
-
-    # augumentation setting
-    datagen = image.ImageDataGenerator(
-        rotation_range=20,
-        width_shift_range=0.2,
-        height_shift_range=0.2,
-        horizontal_flip=True,
-        vertical_flip=True)
+    y_train = np.array([
+        np.load(f"{args.preprocessed_data_path}/{filename}.npy")
+        for filename in train_images
+    ])
+    y_train = np.array([
+        np.load(f"{args.preprocessed_data_path}/{filename}.npy")
+        for filename in test_images
+    ])
 
     # prepare model
     model = Sequential()
-    model.add(Conv2D(32, (3, 3), activation='relu', input_shape=X_train[0].shape))
+    model.add(Conv2D(32, (3, 3), activation='relu', padding="same", input_shape=(256, 1600, 3)))
     model.add(Dropout(0.3))
     model.add(MaxPooling2D((2, 2)))
-    model.add(Conv2D(64, (3, 3), activation='relu'))
+    model.add(Conv2D(64, (3, 3), activation='relu', padding="same"))
+    model.add(Conv2D(64, (3, 3), activation='relu', padding="same"))
     model.add(MaxPooling2D((2, 2)))
-    model.add(Conv2D(64, (3, 3), activation='relu'))
-    model.add(Conv2D(64, (3, 3), activation='relu'))
-    model.add(Conv2D())
+    model.add(Conv2DTranspose(64, (2, 2), strides=(2, 2), padding='same'))
+    model.add(Conv2D(32, (3, 3), activation='relu', padding="same"))
+    model.add(Conv2D(16, (3, 3), activation='relu', padding="same"))
+    model.add(Dropout(0.5))
+    model.add(Conv2DTranspose(8, (2, 2), strides=(2, 2), padding='same'))
+    model.add(Conv2D(1, (1, 1), activation="sigmoid", padding="same"))
+
+    def dice_coef(y_true, y_pred, smooth=1):
+        y_true_f = K.flatten(y_true)
+        y_pred_f = K.flatten(y_pred)
+        intersection = K.sum(y_true_f * y_pred_f)
+        return (2. * intersection + smooth) \
+                / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
 
     model.compile(
         optimizer='adam', 
-        loss='categorical_crossentropy',
-        metrics=['accuracy', AUC()]
+        loss='binary_crossentropy',
+        metrics=[AUC(), dice_coef]
         )
 
     # callback setting
@@ -108,11 +117,11 @@ def train(args):
     callbacks = [mc, tb]
 
     # fit
-    datagen.fit(X_train)
-    model.fit_generator(datagen.flow(X_train, y_train, batch_size=32),
-                        steps_per_epoch=len(X_train) / 32, epochs=100,
-                        validation_data=(X_test, y_test), 
-                        callbacks=callbacks)
+    model.fit(X_train, Y_train,
+              epochs=20,
+              batch_size=128,
+              validation_data=(X_test, y_test), 
+              callbacks=callbacks)
 
 if __name__ == "__main__":
     # コマンドライン引数の設定
