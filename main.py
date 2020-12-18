@@ -78,7 +78,7 @@ def train(args):
         for imagename in train_images
     ]
     train_y_path = [
-        glob.glob(f"{args.input_path}/**/{imagename}.npy")[0]
+        glob.glob(f"{args.preprocessed_data_path}/{imagename}.npy")[0]
         for imagename in train_images
     ]
     test_x_path = [
@@ -86,7 +86,7 @@ def train(args):
         for imagename in test_images
     ]
     test_y_path = [
-        glob.glob(f"{args.input_path}/**/{imagename}.npy")[0]
+        glob.glob(f"{args.preprocessed_data_path}/{imagename}.npy")[0]
         for imagename in test_images
     ]
 
