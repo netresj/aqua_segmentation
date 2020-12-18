@@ -51,30 +51,44 @@ def preprocess(args):
         mask = np.reshape(mask, (256, 1600))
         np.save(f"{args.preprocessed_data_path}/{image_name}.npy", mask)        
 
+
+def datagen(x_path, y_path, batch_size=32):
+    idx = 0
+    while True:
+        if idx >= len(x_path):
+            idx = 0
+        x = np.array([
+            imread(path) for path in x_path[idx:idx+batch_size]
+        ])
+        y = np.array([
+            np.load(y_path).reshape([256, 1600, 1]) for path in y_path[idx:idx+batch_size]
+        ])
+        idx += batch_size
+        yield x, y
+
+
 def train(args):
     # prepare data
     with open(f"{args.preprocessed_data_path}/train.txt") as f:
         train_images = f.read().splitlines()
     with open(f"{args.preprocessed_data_path}/test.txt") as f:
         test_images = f.read().splitlines()
-    X_train = np.array([
-        imread(glob.glob(f"{args.input_path}/**/{filename}")[0])
-        for filename in train_images
-    ])
-    X_train = X_train / 255
-    X_test = np.array([
-        imread(glob.glob(f"{args.input_path}/**/{filename}")[0])
-        for filename in test_images
-    ])
-    X_test = X_test / 255
-    y_train = np.array([
-        np.load(f"{args.preprocessed_data_path}/{filename}.npy")
-        for filename in train_images
-    ])
-    y_train = np.array([
-        np.load(f"{args.preprocessed_data_path}/{filename}.npy")
-        for filename in test_images
-    ])
+    train_x_path = [
+        glob.glob(f"{args.input_path}/**/{imagename}")[0]
+        for imagename in train_images
+    ]
+    train_y_path = [
+        glob.glob(f"{args.input_path}/**/{imagename}.npy")[0]
+        for imagename in train_images
+    ]
+    test_x_path = [
+        glob.glob(f"{args.input_path}/**/{imagename}")[0]
+        for imagename in test_images
+    ]
+    test_y_path = [
+        glob.glob(f"{args.input_path}/**/{imagename}.npy")[0]
+        for imagename in test_images
+    ]
 
     # prepare model
     model = Sequential()
@@ -117,11 +131,11 @@ def train(args):
     callbacks = [mc, tb]
 
     # fit
-    model.fit(X_train, Y_train,
-              epochs=20,
-              batch_size=128,
-              validation_data=(X_test, y_test), 
-              callbacks=callbacks)
+    model.fit_generator(datagen(train_x_path, train_y_path),
+                        steps_per_epoch=int(len(train_x_path)/32),
+                        validation_data=datagen(test_x_path, test_y_path), 
+                        validation_steps=int(len(test_x_path)/32)
+                        callbacks=callbacks)
 
 if __name__ == "__main__":
     # コマンドライン引数の設定
