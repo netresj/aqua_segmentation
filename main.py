@@ -61,7 +61,7 @@ def datagen(x_path, y_path, batch_size=32):
             imread(path) for path in x_path[idx:idx+batch_size]
         ])
         y = np.array([
-            np.load(y_path).reshape([256, 1600, 1]) for path in y_path[idx:idx+batch_size]
+            np.load(path).reshape([256, 1600, 1]) for path in y_path[idx:idx+batch_size]
         ])
         idx += batch_size
         yield x, y
