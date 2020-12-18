@@ -9,7 +9,7 @@ import pandas as pd
 import tensorflow.keras.applications.resnet as resnet
 from tensorflow.keras.preprocessing import image
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten, Dropout
+from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten, Dropout, Conv2DTranspose
 from tensorflow.keras.optimizers import SGD
 from tensorflow.keras.metrics import AUC
 from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint
