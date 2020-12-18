@@ -134,7 +134,7 @@ def train(args):
     model.fit_generator(datagen(train_x_path, train_y_path),
                         steps_per_epoch=int(len(train_x_path)/32),
                         validation_data=datagen(test_x_path, test_y_path), 
-                        validation_steps=int(len(test_x_path)/32)
+                        validation_steps=int(len(test_x_path)/32),
                         callbacks=callbacks)
 
 if __name__ == "__main__":
