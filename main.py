@@ -26,7 +26,7 @@ from tensorflow.keras import backend as K
 
 def preprocess(args):
     # read csv
-    csv_path = glob.glob(f"{args.input_path}/{args.csv_name}")[0]
+    csv_path = glob.glob(f"{args.input_path}/**/{args.csv_name}")[0]
     df = pd.read_csv(csv_path)
 
     # split train and test data
@@ -171,13 +171,13 @@ def train(args):
 
 if __name__ == "__main__":
     # コマンドライン引数の設定
-    parser = argparse.ArgumentParser(description="aqualium demo file")
-    parser.add_argument("running_parten", type=str, help="both | train | preprocess")
-    parser.add_argument("--input_path", default="datas")
-    parser.add_argument("--output_path", default="output")
-    parser.add_argument("--preprocessed_data_path", default="output/preprocessed_data")
-    parser.add_argument("--log_path", default=".")
-    parser.add_argument("--csv_name", default="train.csv")
+    parser = argparse.ArgumentParser(description="aqualium demo file")    
+    parser.add_argument('running_parten', type=str, help='both | train | preprocess')
+    parser.add_argument('--input_path', default='/kqi/input')
+    parser.add_argument('--output_path', default='/kqi/output/demo')
+    parser.add_argument('--preprocessed_data_path', default='/kqi/output/preprocessed_data')
+    parser.add_argument('--log_path', default='/kqi/output')
+    parser.add_argument('--csv_name', default='train.csv')
     parser.add_argument("--batch_size", default=64, type=int)
     parser.add_argument("--reshaped_image_size", default=(64, 256), type=Tuple)
     args = parser.parse_args()
